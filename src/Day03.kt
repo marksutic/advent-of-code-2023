@@ -1,4 +1,5 @@
 fun main() {
+
   fun part1(input: List<String>): Int {
     val coordinates: List<List<Char>> = input.map { it.toCharArray().toList() }
     val partNumbers = coordinates.toParts()
@@ -8,8 +9,17 @@ fun main() {
 
   fun part2(input: List<String>): Int {
     val coordinates: List<List<Char>> = input.map { it.toCharArray().toList() }
-    val partNumbers = coordinates.toParts()
-    return 1
+
+    return coordinates.findAllNumbersWithGears()
+      .groupBy { it.gear }
+      .mapNotNull { partNumber ->
+        if (partNumber.value.size == 2) {
+          partNumber.value[0].value * partNumber.value[1].value
+        } else {
+          null
+        }
+      }
+      .sum()
   }
 
   val testInputFirstStar = readInput("Day03_1_test")
@@ -18,10 +28,10 @@ fun main() {
   val input = readInput("Day03")
   println("first star: ${part1(input)}")
 
-//  val testInputSecondStar = readInput("Day03_2_test")
-//  check(part2(testInputSecondStar) == 467835)
-//
-//  println("second star: ${part2(input)}")
+  val testInputSecondStar = readInput("Day03_2_test")
+  check(part2(testInputSecondStar) == 467835)
+
+  println("second star: ${part2(input)}")
 }
 
 
@@ -54,7 +64,7 @@ private fun List<List<Char>>.toParts(): List<PartNumberWithLocation> {
         partNumber = 10 * partNumber + char.digitToInt()
         "partNumber: $partNumber".printlnDebug()
       } else {
-        if (partNumber > 0){
+        if (partNumber > 0) {
           partNumbers += PartNumberWithLocation(partNumber, rowIndex, numberStartPosition, numberEndPosition)
         }
         numberStartPosition = -1
@@ -90,8 +100,59 @@ private fun List<List<Char>>.hasAdjacentSymbol(partNumber: PartNumberWithLocatio
   return hasSymbol
 }
 
-private data class PartNumberWithGear(
-  val value:Int,
-  val gearRowIndex: Int,
-  val gearColumnIndex: Int,
-)
+private data class PartNumberWithGearLocation(val value: Int,val gear: Gear)
+
+private data class Gear(val row:Int, val column: Int)
+
+private fun List<List<Char>>.findAllNumbersWithGears(): List<PartNumberWithGearLocation> {
+  val parts = mutableListOf<PartNumberWithGearLocation>()
+  for (rowIndex in this.indices) {
+    var partNumber = 0
+    var numberStartPosition = -1
+    var numberEndPosition = -1
+    for (columnIndex in this[rowIndex].indices + 1) {
+      when (val char = this[rowIndex][columnIndex]) {
+        in '0'..'9' -> {
+          if (numberStartPosition == -1) {
+            numberStartPosition = columnIndex
+            numberEndPosition = columnIndex
+          } else {
+            numberEndPosition = columnIndex
+          }
+          partNumber = 10 * partNumber + char.digitToInt()
+        }
+        else -> {
+          if (numberStartPosition != -1) {
+            "number: $partNumber".printlnDebug()
+            parts += this.getGears(rowIndex, numberStartPosition, numberEndPosition).map { PartNumberWithGearLocation(partNumber, Gear(it.first, it.second)) }
+            numberStartPosition = -1
+            numberEndPosition = -1
+            partNumber = 0
+          }
+        }
+      }
+    }
+    if (numberStartPosition != -1) {
+      parts += this.getGears(rowIndex, numberStartPosition, numberEndPosition).map { PartNumberWithGearLocation(partNumber, Gear(it.first, it.second)) }
+      partNumber = 0
+    }
+  }
+  return parts
+}
+
+private fun List<List<Char>>.getGears(row: Int, startColumn: Int, endColumn: Int): List<Pair<Int, Int>> {
+  val top = (row - 1).coerceAtLeast(0)
+  val down = (row + 1).coerceAtMost(this.lastIndex)
+  val left = (startColumn - 1).coerceAtLeast(0)
+  val right = (endColumn + 1).coerceAtMost(this[0].lastIndex)
+  return (top..down).flatMap { rowIndex ->
+    (left..right).mapNotNull { columnIndex ->
+      if (this[rowIndex][columnIndex] == '*') {
+        Pair(rowIndex, columnIndex)
+      } else {
+        null
+      }
+    }
+  }
+}
+
