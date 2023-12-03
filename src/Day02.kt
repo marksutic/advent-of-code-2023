@@ -34,8 +34,8 @@ fun main() {
   println("second star: ${part2(input)}")
 }
 
-data class GameSet(val red: Int, val green: Int, val blue: Int)
-data class GameRecord(val id: Int, val sets: List<GameSet>)
+private data class GameSet(val red: Int, val green: Int, val blue: Int)
+private data class GameRecord(val id: Int, val sets: List<GameSet>)
 
 private fun String.toGameRecord(): GameRecord {
   val id = this.substringAfter("Game ").substringBefore(":").toInt()
