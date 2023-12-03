@@ -3,6 +3,7 @@ import java.security.MessageDigest
 import kotlin.io.path.Path
 import kotlin.io.path.readLines
 
+
 /**
  * Reads lines from the given input txt file.
  */
@@ -19,3 +20,9 @@ fun String.md5() = BigInteger(1, MessageDigest.getInstance("MD5").digest(toByteA
  * The cleaner shorthand for printing output.
  */
 fun Any?.println() = println(this)
+
+val doNothing: Unit = Unit
+
+var DEBUG = false
+
+fun Any?.printlnDebug() = if (DEBUG) println(this) else doNothing
